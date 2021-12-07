@@ -21,12 +21,13 @@ contract Vendor is Ownable{
     address private agregatorEth;
     address private tokenERC721;
     mapping (address => address) private approvedTokens;
+    address[] private approvedTokensList;
 
     event BuyToken(address indexed _from, address indexed _to, uint256 _amount);
 
-    constructor(address _token, address _agregator, address _tokenERC721){
+    constructor(address _token, address _agregatorEth, address _tokenERC721){
         token = _token;
-        agregatorEth = _agregator;
+        agregatorEth = _agregatorEth;
         tokenERC721 = _tokenERC721;
     }
 
@@ -35,6 +36,7 @@ contract Vendor is Ownable{
         require(approvedTokens[_token] == address(0), "Token already exists!");
 
         approvedTokens[_token] = _agregator;
+        approvedTokensList.push(_token);
     }
 
     function removeApprovedToken(address _token) external onlyOwner{
@@ -42,6 +44,14 @@ contract Vendor is Ownable{
         require(approvedTokens[_token] != address(0), "Token isn't exists!");
 
         delete approvedTokens[_token];
+        uint _length = approvedTokensList.length;
+        for(uint256 i = 0; i < _length; i++) {
+            if(approvedTokensList[i] == _token) {
+                approvedTokensList[i] = approvedTokensList[_length-1];
+                approvedTokensList.pop();
+                break;
+            }
+        }
     }
 
     function buyToken(address _token, uint256 _amount) external payable{
@@ -125,4 +135,19 @@ contract Vendor is Ownable{
 
         emit BuyToken(address(this), msg.sender, fullAmount);
     } 
+
+    function refund() public onlyOwner {
+        uint256 ethBalance = address(this).balance;
+        if(ethBalance>0) {
+            payable(owner()).transfer(ethBalance);
+        }
+        uint _length = approvedTokensList.length;
+        for(uint256 i = 0; i < _length; i++) {
+            address _token = approvedTokensList[i];
+            uint256 _balance = IERC20(_token).balanceOf(address(this));
+            if(_balance > 0) {
+                IERC20(_token).safeTransfer(owner(), _balance);
+            } 
+        }
+    }
 }
