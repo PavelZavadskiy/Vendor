@@ -1,0 +1,3 @@
+Verifying Exchange
+Pass - Verified: https://rinkeby.etherscan.io/address/0x84F42097F5473E92185b9014F561fe837E2EB303#code
+Successfully verified 1 contract(s).
