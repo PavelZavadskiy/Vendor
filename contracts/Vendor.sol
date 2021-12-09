@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 interface I_Agregator{
     function decimals() external view returns (uint8);
@@ -12,6 +13,11 @@ interface I_Agregator{
 
 interface I_ERC721{
     function balanceOf(address owner) external view returns (uint256);
+}
+
+interface I_ERC20{
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
 }
 
 contract Vendor is Ownable{
@@ -54,76 +60,81 @@ contract Vendor is Ownable{
         }
     }
 
-    function buyToken(address _token, uint256 _amount) external payable{
-        bytes memory _resp_string;
-        bool result = true;
-        uint256 fullAmount = 0;
-        do{
-            if(I_ERC721(tokenERC721).balanceOf(msg.sender) == 0){
-                _resp_string = "You can't buy token! You have not ERC721 token!";
-                result = false;
-                break;
-            }
-            if(msg.value == 0 && (_amount == 0 || _token == address(0))){
-                _resp_string = "Wrong input values!";
-                result = false;
-                break;
-            }
+    function getCountApprovedTokens() external view returns (uint256) {
+        return approvedTokensList.length;
+    }
 
-            if(msg.value > 0){
-                if(msg.sender.balance < msg.value){
-                    _resp_string = "You do not have enough ether in your balance!";
-                    result = false;
-                    break;
-                }
-                ( , int256 _priceSst, , , ) = I_Agregator(agregatorEth).latestRoundData();
+    function getInfoApprovedToken(uint256 _idx) external view returns (address _adr, string memory _name, string memory _symbol) {
+        require(_idx<approvedTokensList.length, "Wrong token's index!");
+        address _token = approvedTokensList[_idx];
+        return (_token, I_ERC20(_token).name(), I_ERC20(_token).symbol());
+    }
+
+    function callBack(address _to, uint256 _amount, bytes memory _msg) private {
+        bool sent;
+        if(msg.value > 0){
+            (sent, ) = payable(_to).call{value: _amount}(_msg);
+        } else {
+            (sent, ) = payable(_to).call(_msg);
+        }
+        require(sent, "Error calling the fallback function!");        
+    }
+
+    function buyToken(address _token, uint256 _amount) external payable{
+        uint256 fullAmount = 0;
+        if(I_ERC721(tokenERC721).balanceOf(msg.sender) == 0){
+            callBack(msg.sender, msg.value, "You can't buy token! You have not ERC721 token!");
+            console.log("You can't buy token! You have not ERC721 token!");
+            return;
+        }
+        if(msg.value == 0 && (_amount == 0 || _token == address(0))){
+            callBack(msg.sender, msg.value, "Wrong input values!");
+            console.log("Wrong input values!");
+            return;
+        }
+
+        if(msg.value > 0){
+            if(msg.sender.balance < msg.value){
+                callBack(msg.sender, msg.value, "You do not have enough ether in your balance!");
+                console.log("You do not have enough ether in your balance!");
+                return;
+            }          
+            ( , int256 _priceSst, , , ) = I_Agregator(agregatorEth).latestRoundData();
                 uint256 _decimalsSst = uint256(I_Agregator(agregatorEth).decimals());
                 fullAmount += (msg.value * uint256(_priceSst)) / 10**_decimalsSst;
-            }
+        }
 
-            if(_amount != 0 && _token != address(0)){
-                address _agregatorToken = approvedTokens[_token];
-                if(_agregatorToken == address(0)){
-                    _resp_string = "This token wasn't approved!";
-                    result = false;
-                    break;
-                }
-                if(IERC20(_token).balanceOf(msg.sender) < _amount){
-                    _resp_string = "You do not have enough token in your balance!";
-                    result = false;
-                    break;
-                }
-                if(IERC20(_token).allowance(msg.sender, address(this)) < _amount){
-                    _resp_string = "You have not approved enough tokens!";
-                    result = false;
-                    break;
-                }
-                ( , int256 _priceSst, , , ) = I_Agregator(_agregatorToken).latestRoundData();
-                uint256 _decimalsSst = uint256(I_Agregator(_agregatorToken).decimals());
-                fullAmount += (msg.value * uint256(_priceSst)) / 10**_decimalsSst;
+        if(_amount != 0 && _token != address(0)){
+            address _agregatorToken = approvedTokens[_token];
+            if(_agregatorToken == address(0)){
+                callBack(msg.sender, msg.value, "This token wasn't approved!");
+                console.log("This token wasn't approved!");
+                return;
             }
+            if(IERC20(_token).balanceOf(msg.sender) < _amount){
+                callBack(msg.sender, msg.value, "You have not enough token in your balance!");
+                console.log("You have not enough token in your balance!");
+                return;
+            }
+            if(IERC20(_token).allowance(msg.sender, address(this)) < _amount){
+                callBack(msg.sender, msg.value, "You have not approved enough tokens!");
+                console.log("You have not approved enough tokens!");
+                return;
+            }
+            ( , int256 _priceSst, , , ) = I_Agregator(_agregatorToken).latestRoundData();
+            uint256 _decimalsSst = uint256(I_Agregator(_agregatorToken).decimals());
+            fullAmount += (_amount * uint256(_priceSst)) / 10**_decimalsSst;
+        }
 
-            if(fullAmount == 0){
-                _resp_string = "Your total amount of token is zerro!";
-                result = false;
-                break;
-            }
+        if(fullAmount == 0){
+            callBack(msg.sender, msg.value, "Your total amount of token is zerro!");
+            console.log("Your total amount of token is zerro!");
+            return;
+        }
 
-            if(fullAmount > IERC20(token).balanceOf(address(this))){
-                _resp_string = "Sorry, there is not enough tokens to buy!";
-                result = false;
-                break;
-            }
-        }while(false);
-
-        if(result == false){
-            bool sent;
-            if(msg.value > 0){
-                (sent, ) = msg.sender.call{value: msg.value}(_resp_string);
-            } else {
-                (sent, ) = msg.sender.call(_resp_string);
-            }
-            require(sent, "Error calling the fallback function!");        
+        if(fullAmount > IERC20(token).balanceOf(address(this))){
+            callBack(msg.sender, msg.value, "Sorry, there is not enough tokens to buy!");
+            console.log("Sorry, there is not enough tokens to buy!");
             return;
         }
 
@@ -136,7 +147,7 @@ contract Vendor is Ownable{
         emit BuyToken(address(this), msg.sender, fullAmount);
     } 
 
-    function refund() public onlyOwner {
+    function claimAll() external onlyOwner {
         uint256 ethBalance = address(this).balance;
         if(ethBalance>0) {
             payable(owner()).transfer(ethBalance);
