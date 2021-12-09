@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-contract AgregatorEthSst {
+contract AgregatorDaiSst_1 {
     uint8 _decimals = 8;
-    uint80 _roundId = 55340232221128654880;
-    int256 _answer = 464706547924;                     
-    uint256 _startedAt = 1638385687;
-    uint256 _updatedAt = 1638385687;
-    uint80 _answeredInRound = 55340232221128654880;
+    uint80 _roundId = 55340232221128654861;
+    int256 _answer = 99981675;                                                               
+    uint256 _startedAt = 1638990587;
+    uint256 _updatedAt = 1638990587;
+    uint80 _answeredInRound = 55340232221128654861;
     
     function decimals() external view returns (uint8) {
         return _decimals;

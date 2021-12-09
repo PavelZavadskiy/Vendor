@@ -87,18 +87,8 @@ contract Vendor is Ownable{
             console.log("You can't buy token! You have not ERC721 token!");
             return;
         }
-        if(msg.value == 0 && (_amount == 0 || _token == address(0))){
-            callBack(msg.sender, msg.value, "Wrong input values!");
-            console.log("Wrong input values!");
-            return;
-        }
 
-        if(msg.value > 0){
-            if(msg.sender.balance < msg.value){
-                callBack(msg.sender, msg.value, "You do not have enough ether in your balance!");
-                console.log("You do not have enough ether in your balance!");
-                return;
-            }          
+        if(msg.value > 0){    
             ( , int256 _priceSst, , , ) = I_Agregator(agregatorEth).latestRoundData();
                 uint256 _decimalsSst = uint256(I_Agregator(agregatorEth).decimals());
                 fullAmount += (msg.value * uint256(_priceSst)) / 10**_decimalsSst;
@@ -138,7 +128,7 @@ contract Vendor is Ownable{
             return;
         }
 
-        if(_amount > 0) {
+        if(_amount != 0 && _token != address(0)) {
             IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
         }
 

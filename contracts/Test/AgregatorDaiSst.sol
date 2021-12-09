@@ -20,5 +20,4 @@ contract AgregatorDaiSst {
         updatedAt = _updatedAt;
         answeredInRound = _answeredInRound;
     }
-
 }
