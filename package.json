@@ -1,5 +1,5 @@
 {
-  "name": "Exchange",
+  "name": "Vendor",
   "version": "1.0.0",
   "description": "",
   "main": "truffle-config.js",
@@ -12,7 +12,7 @@
     "harhat-test": "npx hardhat test",
     "compile": "truffle compile --all",
     "migrate-rinkeby": "truffle migrate --network rinkeby --reset",
-    "verify-contract": "truffle run verify Exchange --network rinkeby",
+    "verify-contract": "truffle run verify Vendor --network rinkeby",
     "coverage-test": "npx hardhat coverage"
   },
   "dependencies": {

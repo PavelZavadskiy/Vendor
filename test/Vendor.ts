@@ -13,7 +13,7 @@ const bn1e18 = web3.utils.toBN(1e18);
 const bn1e17 = web3.utils.toBN(1e17);
 const bn1e16 = web3.utils.toBN(1e16);
 
-describe("Exchange", () => {
+describe("Vendor", () => {
     let accounts: string[];
     let owner: any;
     let payer1: any;

@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 interface I_Agregator{
     function decimals() external view returns (uint8);
@@ -84,7 +84,7 @@ contract Vendor is Ownable{
         uint256 fullAmount = 0;
         if(I_ERC721(tokenERC721).balanceOf(msg.sender) == 0){
             callBack(msg.sender, msg.value, "You can't buy token! You have not ERC721 token!");
-            console.log("You can't buy token! You have not ERC721 token!");
+            //console.log("You can't buy token! You have not ERC721 token!");
             return;
         }
 
@@ -98,17 +98,17 @@ contract Vendor is Ownable{
             address _agregatorToken = approvedTokens[_token];
             if(_agregatorToken == address(0)){
                 callBack(msg.sender, msg.value, "This token wasn't approved!");
-                console.log("This token wasn't approved!");
+                //console.log("This token wasn't approved!");
                 return;
             }
             if(IERC20(_token).balanceOf(msg.sender) < _amount){
                 callBack(msg.sender, msg.value, "You have not enough token in your balance!");
-                console.log("You have not enough token in your balance!");
+                //console.log("You have not enough token in your balance!");
                 return;
             }
             if(IERC20(_token).allowance(msg.sender, address(this)) < _amount){
                 callBack(msg.sender, msg.value, "You have not approved enough tokens!");
-                console.log("You have not approved enough tokens!");
+                //console.log("You have not approved enough tokens!");
                 return;
             }
             ( , int256 _priceSst, , , ) = I_Agregator(_agregatorToken).latestRoundData();
@@ -118,13 +118,13 @@ contract Vendor is Ownable{
 
         if(fullAmount == 0){
             callBack(msg.sender, msg.value, "Your total amount of token is zerro!");
-            console.log("Your total amount of token is zerro!");
+            //console.log("Your total amount of token is zerro!");
             return;
         }
 
         if(fullAmount > IERC20(token).balanceOf(address(this))){
             callBack(msg.sender, msg.value, "Sorry, there is not enough tokens to buy!");
-            console.log("Sorry, there is not enough tokens to buy!");
+            //console.log("Sorry, there is not enough tokens to buy!");
             return;
         }
 
